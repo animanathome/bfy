@@ -59,6 +59,21 @@
   transform: translate(-50%, 0);
 }
 
+.Summoner-intro-image {
+  float: left;
+}
+
+.Summoner-intro-image img{
+  width: 100px;
+  height: 100px;
+}
+
+.Summoner-intro-details {
+  padding-left: 120px;  
+}
+
+
+
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }

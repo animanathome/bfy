@@ -1,34 +1,34 @@
 # https://hub.docker.com/r/derbenni/docker-pia-openvpn/
 version: "2"
 services:
-  # nginx:
-  #   container_name: nginx
-  #   build: ./nginx
-  #   ports:
-  #     - 80:80
-  #   volumes:
-  #     - /Users/manu/Code/bfy/client/public:/code/bfy
-  mongo:
-    container_name: mongo
-    image: mongo
+  nginx:
+    container_name: nginx
+    build: ./nginx
     ports:
-      - "27017:27017"
-    volumes_from:
-      - mongodata
-    networks:
-      - default
-  mongodata:
-    image: tianon/true
+      - 80:80
     volumes:
-      - /Users/manu/Code/mvs/data/mongo-db:/data/db
-  explore:
-    container_name: explore
-    build: ./explore
+      - /Users/manu/Code/bfy/client/build:/code/bfy
+  # mongo:
+  #   container_name: mongo
+  #   image: mongo
+  #   ports:
+  #     - "27017:27017"
+  #   volumes_from:
+  #     - mongodata
+  #   networks:
+  #     - default
+  # mongodata:
+  #   image: tianon/true
+  #   volumes:
+  #     - /Users/manu/Code/mvs/data/mongo-db:/data/db
+  server:
+    container_name: server
+    build: ./server
     volumes:
-      - /Users/manu/Code/bfy/:/app
+      - /Users/manu/Code/bfy/server/:/app
     ports:
       - "3001:3001"
-    depends_on: 
-      - mongo
+    # depends_on: 
+    #   - mongo
     environment:
       - NODE_ENV=development

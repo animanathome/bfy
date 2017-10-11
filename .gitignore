@@ -1,6 +1,6 @@
-/explore/data
+/server/data
 /data
-/explore/node_modules
-/explore/credentials.json
-/explore/package-lock.json
+/server/node_modules
+/server/credentials.json
+/server/package-lock.json
 package-lock.json
