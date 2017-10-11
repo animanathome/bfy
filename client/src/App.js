@@ -11,9 +11,12 @@ import {
   TableRow,
   TableRowColumn,
 } from 'material-ui/Table';
+import AppBar from 'material-ui/AppBar';
 import {Tabs, Tab} from 'material-ui/Tabs';
 import TextField from 'material-ui/TextField';
 import RaisedButton from 'material-ui/RaisedButton';
+import IconButton from 'material-ui/IconButton';
+import NavigationClose from 'material-ui/svg-icons/navigation/close';
 import Paper from 'material-ui/Paper';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
@@ -22,6 +25,24 @@ import io from 'socket.io-client';
 //eslint-disable-next-line
 var host = location.protocol+'//'+location.hostname+":3001"
 let socket = io(host)
+
+class MAppBar extends Component {
+
+	onHome = function(){
+		console.log('onHome')
+		this.props.history.push('/')
+	}
+
+	render(){
+		return (
+			<AppBar
+				title={this.props.title}
+				iconElementLeft={<IconButton><NavigationClose /></IconButton>}
+				onLeftIconButtonTouchTap={this.onHome.bind(this)}
+			/>
+		)
+	}
+}
 
 class SummonerHeader extends Component {
 
@@ -155,6 +176,9 @@ class Summoner extends Component {
 		
 		return (
 			<div>
+				<div>
+					<MAppBar history={this.props.history} title="Summoner Details"/>
+				</div>
 				<div className='Summoner-splash'>
 					{ this.state.user &&
 						<div className='Summoner-intro'>
