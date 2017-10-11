@@ -161,6 +161,10 @@ var getSummonerByName = function(name){
 	return deferred.promise;
 }
 
+var getChampionName = function(champion_id){
+	return champion_data.keys[champion_id]
+}
+
 var getMatchDetails = function(game_id){
 	var deferred = Q.defer();
 	
@@ -379,6 +383,8 @@ var formatSeasonDetails = function(data){
 
 var lolAPI = (function(){
 	return {
+		getChampionName: getChampionName,
+		getRecentMatches: lol.getRecentMatches,
 		getSummonerByName: getSummonerByName,
 		getMatchDetails: getMatchDetails
 	}

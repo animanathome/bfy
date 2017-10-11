@@ -99,6 +99,72 @@ class ChampionSeason extends Component {
 	}
 }
 
+class ChampionsMatch extends Component {
+	render(){
+		return (
+			<div>
+				<div className="ChampionMatch-image">
+					<img src={'http://ddragon.leagueoflegends.com/cdn/7.20.2/img/champion/'+this.props.data.championName+'.png'}/>
+				</div>
+				<div>
+					{this.props.data.lane}
+				</div>
+			</div>
+		)
+	}
+}
+
+class ChampionsMatches extends Component {
+	constructor(props){
+		super(props)
+
+		var scope = this;
+		this._mounted = false;
+		this.data = {}
+		this.state = {matches:false}
+
+		socket.on('summoner:getRecentMatches', function(res){
+			if(scope._mounted && res.data){
+				console.log('got matches')
+				scope.data['matches'] = res.data;
+				scope.setState({'matches':true})
+			}
+		})
+	}
+
+	componentDidMount() {
+		console.log('componentDidMount')
+		this._mounted = true;
+		socket.emit('summoner:getRecentMatches', {
+			accountId:this.props.accountId
+		})
+	}
+
+	componentWillUnmount() {
+		this._mounted = false;
+	}
+
+	render(){
+		console.log('render', this.props)
+		console.log('data', this.data)
+		var scope = this;
+		return (
+			<div className='Summoner-matches'>
+				{!this.state.matches && 
+					<div>
+						Loading ...
+					</div>
+				}
+				{this.state.matches && 
+					scope.data.matches.matches.map(function(item, index){
+						return <ChampionsMatch key={index} data={item}/>
+					})
+				}
+			</div>
+		)
+	}
+}
+
 class ChampionsLayout extends Component {
 	constructor(props){
 		super(props)
@@ -106,8 +172,7 @@ class ChampionsLayout extends Component {
 		this.state = {
 			value: 0,
 		};
-
-		console.log(props)
+		// console.log(props)
 	}
 
 	handleChange = function(value){
@@ -174,6 +239,8 @@ class Summoner extends Component {
 	render(){
 		var scope = this;
 		
+		console.log('user data', this.data.user)
+
 		return (
 			<div>
 				<div>
@@ -181,14 +248,18 @@ class Summoner extends Component {
 				</div>
 				<div className='Summoner-splash'>
 					{ this.state.user &&
-						<div className='Summoner-intro'>
-							<div className='Summoner-intro-image'>
-								<img src={'http://ddragon.leagueoflegends.com/cdn/7.20.2/img/profileicon/'+scope.data.user.profileIconId+'.png'} alt="profile"></img>						
+						<div>
+							<div className='Summoner-intro'>
+								<div className='Summoner-intro-image'>
+									<img src={'http://ddragon.leagueoflegends.com/cdn/7.20.2/img/profileicon/'+scope.data.user.profileIconId+'.png'} alt="profile"></img>						
+								</div>
+								<div className='Summoner-intro-details'>
+									<div>Name: {scope.data.user.name} </div>
+									<div>Level: {scope.data.user.summonerLevel} </div>
+								</div>
 							</div>
-							<div className='Summoner-intro-details'>
-								<div>Name: {scope.data.user.name} </div>
-								<div>Level: {scope.data.user.summonerLevel} </div>
-							</div>
+
+							<ChampionsMatches accountId={scope.data.user.accountId}/>
 						</div>
 					}
 					{!this.state.user && 

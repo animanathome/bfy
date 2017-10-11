@@ -12,7 +12,6 @@ var username = 'SerMeowington'
 
 // KDA = (kills + assists) / deaths
 
-
 // get summoner by name
 // returns 
 // { id: 53300045,
@@ -305,6 +304,54 @@ var lol = (function(){
 		return deferred.promise;
 	}
 
+	var getRecentMatches = function(accountId, region){
+		if(accountId === undefined){
+			accountId = 237242134
+		}
+
+		var deferred = Q.defer();
+		
+		// console.log('getRecentMatches', accountId, region)
+		var query = getURL(region)
+		query +='match/v3/matchlists/by-account/'+accountId+'/recent'
+		query += '?api_key='+credentials.riot.key
+		console.log(query)
+		rp({uri: query,json:true})
+		.then(function(response){
+			console.log('response', response)
+			deferred.resolve(response);
+		})
+		.catch(function(err){
+			deferred.reject(err.message)
+		})
+
+		return deferred.promise;
+	}
+
+	// getRecentMatches()
+
+	var getRecentMatchDetails = function(accountId, region){
+
+		getRecentMatches(accountId)
+		.then(function(data){
+
+			var n_m = data.matches.length;
+			var m = 0;
+
+			var getData = function(){
+				getMatchDetails(data.matches[m].gameId)
+				.then(function(gdata){
+					console.log('game data for', data.matches[m].gameId)
+					console.log(gdata)
+				})
+			}
+
+			getData();
+		})
+	}
+
+	// getRecentMatchDetails()
+
 	var getMatchDetails = function(matchId, region){
 		if(matchId === undefined){
 			matchId = 2201358165
@@ -327,14 +374,13 @@ var lol = (function(){
 		})
 
 		return deferred.promise;
-	}
+	}	
 
 	return {
+		getRecentMatches: getRecentMatches,
 		getSummonerByName: getSummonerByName,
 		getMatchDetails: getMatchDetails
 	}
 })()
 
 module.exports = lol
-
-

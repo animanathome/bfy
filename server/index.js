@@ -18,20 +18,20 @@ var io = require('socket.io').listen(server);
 io.sockets.on('connection', socket);
 
 // requests
-app.get('/summoner', function(req, res){
-	console.log('summoner get request', req.query)
+// app.get('/summoner', function(req, res){
+// 	console.log('summoner get request', req.query)
 
-	console.log('header', res.headers)
+// 	console.log('header', res.headers)
 
-	lol.getSummonerByName(req.query.name)
-	.then(function(data){
-		console.log(data)
-		res.json(data)
-	})
-	.catch(function(err){
-		console.log(err)
-		res.json({err:'failed request'})
-	})
-})
+// 	lol.getSummonerByName(req.query.name)
+// 	.then(function(data){
+// 		console.log(data)
+// 		res.json(data)
+// 	})
+// 	.catch(function(err){
+// 		console.log(err)
+// 		res.json({err:'failed request'})
+// 	})
+// })
 
 module.exports = app;
