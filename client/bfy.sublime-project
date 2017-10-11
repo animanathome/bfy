@@ -1,0 +1,9 @@
+{
+	"folders":
+	[
+		{
+			"path": "/Users/manu/Code/bfy",
+			"folder_exclude_patterns": ["node_modules", "bfy-db"]
+		}
+	]
+}

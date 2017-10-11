@@ -1,0 +1,65 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 80px;
+}
+
+.App-header {
+  background-color: #222;
+  height: 150px;
+  padding: 20px;
+  color: white;
+}
+
+.App-title {
+  font-size: 1.5em;
+}
+
+.App-intro {
+  font-size: large;
+}
+
+.Home-splash {
+  position: fixed;
+  width: 80%;
+  left: 50%;
+  top: 2%;
+  transform: translate(-50%, 0);
+}
+
+.Home-search {
+  position: fixed;
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 80%;
+  top: 60%;
+}
+
+.Home-splash img {
+  width: 100%;
+  padding-bottom: 10px;
+}
+
+.Home-actions {
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: 30%;
+  top: 19%;
+  padding: 10px;
+}
+
+.Summoner-splash {
+  position: fixed;
+  width: 80%;
+  left: 50%;
+  top: 2%;
+  transform: translate(-50%, 0);
+}
+
+@keyframes App-logo-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
