@@ -1,5 +1,4 @@
-// League of legend data base 
-
+// query our database (faster)
 var Q = require("q");
 var MongoClient = require('mongodb').MongoClient;
 
@@ -23,7 +22,7 @@ var loldb = (function(){
 			.then(function(response){
 				console.log(response, 'matches')
 			})
-			
+
 			 scope.matches.findOne({'gameId':2585563902}, {'gameId':1})
 			 .then(function(data){
 			 	console.log('result', data)

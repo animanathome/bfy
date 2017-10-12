@@ -1,4 +1,5 @@
-// query
+// query LOL servers (slower)
+
 var credentials = require('./credentials');
 var fs = require('fs')
 var jsonfile = require('jsonfile')
@@ -158,7 +159,6 @@ var lol = (function(){
 		var query = getURL(region)
 		query +='match/v3/matches/'+matchId
 		query += '?api_key='+credentials.riot.key
-		console.log(query)
 		rp({uri: query,json:true})
 		.then(function(response){
 			// console.log('response', response)
