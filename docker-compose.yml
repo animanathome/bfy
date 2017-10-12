@@ -28,7 +28,7 @@ services:
       - /Users/manu/Code/bfy/server/:/app
     ports:
       - "3001:3001"
-    # depends_on: 
-    #   - mongo
+    depends_on: 
+      - mongo
     environment:
       - NODE_ENV=development
