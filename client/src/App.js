@@ -26,6 +26,12 @@ import io from 'socket.io-client';
 var host = location.protocol+'//'+location.hostname+":3001"
 let socket = io(host)
 
+
+var renderFloat = function(value){
+	return parseFloat(Math.round(value * 100) / 100).toFixed(2);
+}
+
+
 class MAppBar extends Component {
 
 	onHome = function(){
@@ -44,71 +50,42 @@ class MAppBar extends Component {
 	}
 }
 
-class SummonerHeader extends Component {
-
-}
-
-class ChampionRow extends Component {
-	render(){
-		// console.log('props', this.props)
-		var scope = this;
-		return (
-			<TableRow>
-				{ this.props.labels.map(function(item, index){
-					return <TableRowColumn key={index}>
-										{scope.props.data[item]}
-								 </TableRowColumn>
-				})}
-
-			</TableRow>
-		)
-	}
-}
-
-// smart tabs
-// https://github.com/callemall/material-ui/issues/1352
-class ChampionSeason extends Component {
-	render(){
-		// console.log(this.props.data)
-		var scope = this;
-		var champion_ids = Object.keys(this.props.data);
-		var labels = Object.keys(this.props.data[champion_ids[0]])
-
-		// console.log('labels', labels)
-
-		return (
-			<div>
-				  <Table>
-    				<TableHeader displaySelectAll={false} adjustForCheckbox={false}>
-    					<TableRow>
-	    					{ labels.map(function(item, index){
-		    					return <TableHeaderColumn key={index}>
-		    									{item}
-		    								</TableHeaderColumn>
-	    					})}
-    					</TableRow>
-    				</TableHeader>
-    				<TableBody displayRowCheckbox={false}>
-    					{ champion_ids.map(function(item, index){
-	    					return <ChampionRow key={index} labels={labels} data={scope.props.data[item]}/>
-    					})}
-		      	</TableBody>
-    			</Table>
-			</div>
-		)
-	}
-}
-
 class ChampionsMatch extends Component {
 	render(){
+		console.log(this.props.data)
+
+		var d = this.props.data;
+
+		var kda = renderFloat((d.kills + d.assists)/d.deaths);
+		var status = d.win === true ? "Victory" : "Defeat";
+		var kills = ""
+		if(d.doubleKills > 1) kills = "Double Kill";
+		if(d.tripleKills > 1) kills = "Triple Kill";
+		if(d.quadraKills > 1) kills = "Quadruple Kill";
+
 		return (
-			<div>
-				<div className="ChampionMatch-image">
-					<img src={'http://ddragon.leagueoflegends.com/cdn/7.20.2/img/champion/'+this.props.data.championName+'.png'}/>
-				</div>
-				<div>
-					{this.props.data.lane}
-				</div>
+			<div className="ChampionMatch">
+				<Paper>
+					<div className={"ChampionMatch-content "+status}>
+						<div className="ChampionMatch-stats">
+							{status}
+						</div>
+						<div className="ChampionMatch-image">
+							<img src={'http://ddragon.leagueoflegends.com/cdn/7.20.2/img/champion/'+this.props.data.champion+'.png'}/>
+						</div>
+						<div className="ChampionMatch-KDA">
+							<div className="ChampionMatch-KDA-KDA">{d.kills} / {d.assists} / {d.deaths} </div>
+							<div className="ChampionMatch-KDA-Ratio">{kda}:1 KDA</div>
+							<div className="ChampionMatch-KDA-Kill">{kills}</div>
+						</div>
+						<div className="ChampionMatch-KDA">
+						</div>
+						<div className="ChampionMatch-KDA">
+						</div>
+						<div className="ChampionMatch-KDA">
+						</div>
+					</div>
+				</Paper>
 			</div>
 		)
 	}
@@ -136,7 +113,8 @@ class ChampionsMatches extends Component {
 		console.log('componentDidMount')
 		this._mounted = true;
 		socket.emit('summoner:getRecentMatches', {
-			accountId:this.props.accountId
+			accountId:this.props.accountId,
+			userName:this.props.name
 		})
 	}
 
@@ -145,63 +123,27 @@ class ChampionsMatches extends Component {
 	}
 
 	render(){
-		console.log('render', this.props)
-		console.log('data', this.data)
 		var scope = this;
+		if(this.state.matches){
+			scope.data.matches = scope.data.matches.slice(1, 10)
+		}
+
 		return (
 			<div className='Summoner-matches'>
+				<div className='ChampionMatches'>
+					Recent Games
+				</div>
 				{!this.state.matches && 
 					<div>
 						Loading ...
 					</div>
 				}
-				{this.state.matches && 
-					scope.data.matches.matches.map(function(item, index){
+				{this.state.matches &&
+					scope.data.matches.map(function(item, index){
 						return <ChampionsMatch key={index} data={item}/>
 					})
 				}
 			</div>
-		)
-	}
-}
-
-class ChampionsLayout extends Component {
-	constructor(props){
-		super(props)
-		
-		this.state = {
-			value: 0,
-		};
-		// console.log(props)
-	}
-
-	handleChange = function(value){
-		console.log('handleChange', value)
-		this.setState({
-			value: value,
-		});
-	};
-
-	render(){
-		var scope = this;
-		var seasons = Object.keys(this.props.data)
-
-		return (
-			<Tabs
-        value={this.state.value}
-        onChange={this.handleChange.bind(this)}
-      >
-
-      {seasons.map(function(item, index){
-      	return <Tab
-      						key={index}
-      						label={item}
-      						value={index}>
-      						<ChampionSeason data={scope.props.data[item]}/>
-      					</Tab>
-      })}
-
-      </Tabs>
 		)
 	}
 }
@@ -238,9 +180,6 @@ class Summoner extends Component {
 
 	render(){
 		var scope = this;
-		
-		console.log('user data', this.data.user)
-
 		return (
 			<div>
 				<div>
@@ -259,7 +198,7 @@ class Summoner extends Component {
 								</div>
 							</div>
 
-							<ChampionsMatches accountId={scope.data.user.accountId}/>
+							<ChampionsMatches name={scope.data.user.name} accountId={scope.data.user.accountId}/>
 						</div>
 					}
 					{!this.state.user && 
@@ -351,8 +290,7 @@ class App extends Component {
 		});
 		
 		socket.on('init', function(){
-			console.log('init')			
-			// socket.emit('summoner', {name:'test'})
+			console.log('init')
 		});
 	}
 

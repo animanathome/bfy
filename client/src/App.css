@@ -1,3 +1,11 @@
+.Victory {
+  background-color: #a3cfec;
+}
+
+.Defeat {
+  background-color: #e2b6b3;
+}
+
 .App {
   text-align: center;
 }
@@ -59,6 +67,10 @@
   transform: translate(-50%, 0);
 }
 
+.Summoner-intro {
+  overflow: auto;
+}
+
 .Summoner-intro-image {
   float: left;
 }
@@ -74,17 +86,68 @@
 
 .Summoner-matches {
   position: fixed;
-  width: 80%;
+  width: 100%;
   left: 50%;
-  top: 200px;
+  top: 120px;
   transform: translate(-50%, 0);
 }
 
-.ChampionMatch-image img {
-  width: 100px;
-  height: 100px;
+.ChampionMatches {
+  font-size: 20px;
+  line-height: 40px;
 }
 
+.ChampionMatch {
+  padding-bottom: 4px;
+}
+
+.ChampionMatch-content {
+  display: table;
+  width: 100%;
+}
+
+.ChampionMatch-stats {
+  display: table-cell;
+  width: 70px;
+  text-align: center;
+  font-size: 11px;
+  color: #555;
+  line-height: 16px;
+  
+  height: 50px;
+  vertical-align: middle;
+}
+
+.ChampionMatch-image {
+  display: table-cell;
+  width: 50px;
+  height: 50px;
+}
+
+.ChampionMatch-image img {
+  width: 50px;
+  height: 50px;
+}
+
+.ChampionMatch-KDA{
+  display: table-cell;
+  width: 70px;
+  text-align: center;
+  font-size: 11px;
+  color: #555;
+  line-height: 16px;
+  
+  height: 50px;
+  vertical-align: middle;
+}
+
+.ChampionMatch-KDA-Ratio {
+
+}
+
+.ChampionMatch-Damage {
+  display: table-cell; 
+}
 
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }

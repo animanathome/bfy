@@ -9,12 +9,13 @@ var loldb = (function(){
 	this.db;
 	this.matches;
 	
-	var url = 'mongodb://127.0.0.1:27017/bfy'
 	var scope = this;
 
 	var connect = function(){
+		// var url = 'mongodb://127.0.0.1:27017/bfy';
+		var url = 'mongodb://mongo:27017/bfy';
 		MongoClient.connect(url, function(err, db) {
-			console.log('connect')
+			// console.log('connect', err, db)
 
 			scope.db = db;
 			scope.matches = db.collection('matches');
@@ -22,8 +23,7 @@ var loldb = (function(){
 			.then(function(response){
 				console.log(response, 'matches')
 			})
-
-
+			
 			 scope.matches.findOne({'gameId':2585563902}, {'gameId':1})
 			 .then(function(data){
 			 	console.log('result', data)
@@ -35,16 +35,17 @@ var loldb = (function(){
 			console.log('done')
 		})
 	}
+	connect()
 
 	var isConnected = function(){
-		// console.log('isConnected')
+		console.log('isConnected')
 
 		if(db !== undefined && db.serverConfig.isConnected()){
 			if(matches !== undefined){
 				return true;
 			}else{
+				console.log('Unable to connect to matches collection.')
 				return false;
-				console.log('Unable to connect to matches collection.')		
 			}
 		}
 		console.log('Unable to connect to database.', db)

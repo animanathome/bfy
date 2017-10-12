@@ -36,6 +36,11 @@ var sortByPropertyValue = function(data, property){
 	return result
 }
 
+var getChampionName = function(champion_id){
+	console.log('getChampionName', champion_id)
+	return champion_data.keys[champion_id]
+}
+
 // https://developer.riotgames.com/game-constants.html
 // https://discussion.developer.riotgames.com/questions/1115/v3-season-id-constants.html
 // 9 = SEASON2017
@@ -65,8 +70,9 @@ var sortByPropertyValue = function(data, property){
 
 // console.log(match_details)
 
-var getSummonerMatchDetails = function(data, summoner_name){
-	// console.log('getSummonerMatchDetails')
+// extract and format data from a native LOL game scene
+var extractDataFromMatchDetails = function(data, summoner_name){
+	// console.log('extractDataFromMatchDetails')
 	// console.log('\tname', summoner_name)
 
 	// get participant id
@@ -96,12 +102,16 @@ var getSummonerMatchDetails = function(data, summoner_name){
 		return
 	}
 
+	// console.log(info)
+
 	return {
+		champion: getChampionName(info.championId),
 		win: info.stats.win,
 		kills: info.stats.kills,
 		deaths: info.stats.deaths,
 		assists: info.stats.assists,
-		gold: info.stats.goldEarned - info.stats.goldSpent,
+		goldEarned: info.stats.goldEarned,
+		goldSpent: info.stats.goldSpent,
 		turretKills: info.stats.turretKills,
 		doubleKills: info.stats.doubleKills,
 		tripleKills: info.stats.tripleKills,
@@ -161,21 +171,20 @@ var getSummonerByName = function(name){
 	return deferred.promise;
 }
 
-var getChampionName = function(champion_id){
-	return champion_data.keys[champion_id]
-}
-
-var getMatchDetails = function(game_id){
+var getMatchDetails = function(game_id, user_name, region){
+	console.log('getMatchDetails', game_id, user_name, region)
 	var deferred = Q.defer();
 	
 	// query local database
 	db.getMatchDetails(game_id)
 	.then(function(data){
 		// console.log('loldb', data)
-		deferred.resolve(data);
+		// return formated data to the user
+		deferred.resolve(extractDataFromMatchDetails(data, user_name));
 	})
 	.fail(function(data){
 	// query lol server
+		// console.log('loldb', data)
 		// add timeout to avoid rate limiting
 		setTimeout(function(){
 			lol.getMatchDetails(game_id)
@@ -185,7 +194,8 @@ var getMatchDetails = function(game_id){
 				// add entry to db
 				db.setMatchDetails(data)
 
-				deferred.resolve(data);
+				// return formated data to the user
+				deferred.resolve(extractDataFromMatchDetails(data, user_name));
 			})
 			// TODO: add catch method
 		}, 1200)
@@ -194,151 +204,195 @@ var getMatchDetails = function(game_id){
 	return deferred.promise;
 }
 
-var getChampionSeasonDetails = function(champion_games, summoner_name){
-	// console.log('getChampionSeasonDetails', champion_games, champion_id)
+var getRecentMatches = function(account_id, user_name, region){
+	console.log('getRecentMatchDetails')
 
 	var deferred = Q.defer();
-		
-	var result = {};
-	var i = 0;
-	var games = champion_games.length;
-	
-	var getData = function(){
-		getMatchDetails(champion_games[i].gameId)
-		.then(function(data){
-			
-			var filtered_data = getSummonerMatchDetails(data, summoner_name);
-			result[champion_games[i].gameId] = filtered_data;
-			
-			i++;
 
-			if(i < games){
-				getData();
-			}else{
-				deferred.resolve(result);
-			}
-		})
-	}
-	getData();
+	lol.getRecentMatches(account_id)
+	.then(function(data){
 
-	return deferred.promise;
-}
+		var n_m = data.matches.length;
+		var m = 0;
+		var result = []
 
-var getSeasonDetails = function(season_id){
-	var deferred = Q.defer();
 
-	if(season_id === undefined){
-		season_id = 7
-	}
+		var getData = function(){
+			// console.log('requesting game', data.matches[m].gameId)
+			getMatchDetails(data.matches[m].gameId, user_name, region)
+			.then(function(game_details){
+				// console.log('game data for', data.matches[m].gameId)
+				// console.log(game_details)
+				// console.log(data.matches[m])
+				// console.log('-------------')
+				// console.log(clean_data);
+				result.push(game_details);
 
-	console.log('getSeasonDetails', season_id)
-
-	// get the list of champions that were used during season #7
-	var season_matches = filterPropertyValueMatch(match_data, 'season', season_id)
-
-	// sort the matches based on their used champion
-	var sorted_by_champion = sortByPropertyValue(season_matches, 'champion')
-
-	var result = {};
-	var i = 0;
-	var champion_ids = Object.keys(sorted_by_champion);
-	var n_champions = champion_ids.length;
-
-	var getData = function(){
-		var champion_id = champion_ids[i];
-		// console.log('getData', champion_id);
-		getChampionSeasonDetails(sorted_by_champion[champion_id], 'SerMeowington')
-		.then(function(data){
-			// console.log(data)
-			result[champion_id] = data;
-
-			i++
-			if(i < n_champions){
-				getData();
-			}else{
-				deferred.resolve(result);
-			}
-		})
-	}
-	getData();
-
-	return deferred.promise;
-}
-
-var formatSeasonDetails = function(data){
-	// champion_data.keys
-	var details = {}
-	var champion_ids = Object.keys(data);
-	for(var i = 0; i < champion_ids.length; i++){
-	// for(var i = 0; i < 5; i++){
-		var entry = data[champion_ids[i]];
-		var matches = Object.keys(entry);
-
-		// console.log('-----')
-		// console.log('name', champion_data.keys[champion_ids[i]]);
-		// console.log('n matches', matches.length);
-		// console.log('details', entry)
-
-		var win = 0;
-		var lose = 0;
-		var kills = 0;
-		var deaths = 0;
-		var assists = 0
-		var CS = 0;
-		var turretKills = 0;
-		var doubleKills = 0;
-		var tripleKills = 0;
-		var quadraKills = 0;
-		var gold = 0;
-
-		var maxKills = 0;
-		var maxDeaths = 0;
-
-		var totalDamageDealt = 0;
-		var totalDamageTaken = 0;
-
-		matches.map(function(item){
-			entry[item].win === true ? win++ : lose++;
-			maxKills = maxKills < entry[item].kills ? entry[item].kills : maxKills;
-			maxDeaths = maxDeaths < entry[item].deaths ? entry[item].deaths : maxDeaths;
-
-			kills += entry[item].kills;
-			deaths += entry[item].deaths;
-			assists += entry[item].assists;
-			CS += entry[item].CS;
-			turretKills += entry[item].turretKills;
-			doubleKills += entry[item].doubleKills;
-			tripleKills += entry[item].tripleKills;
-			quadraKills += entry[item].quadraKills;
-			totalDamageDealt += entry[item].totalDamageDealt;
-			totalDamageTaken += entry[item].totalDamageTaken;
-		})
-
-		var result = {
-			name: champion_data.keys[champion_ids[i]],
-			played: matches.length,
-			win: win,
-			lose: lose,
-			kills: kills/matches.length,
-			deaths: deaths/matches.length,
-			assists: assists/matches.length,
-			CS: CS/matches.length,
-			turretKills: turretKills/matches.length,
-			doubleKills: doubleKills,
-			tripleKills: tripleKills,
-			quadraKills: quadraKills,
-			maxKills: maxKills,
-			maxDeaths: maxDeaths,
-			totalDamageDealt: totalDamageDealt/matches.length,
-			totalDamageTaken: totalDamageTaken/matches.length
+				m++;
+				if(m < n_m){
+					getData()
+				}else{
+					deferred.resolve(result);
+				}
+			})
 		}
-		// console.log(result)
 
-		details[champion_ids[i]] = result;
-	}
-	// console.log(details)
-	return details;
+		getData();
+	})
+
+	return deferred.promise;
 }
+
+// getRecentMatchDetails(215942119, "SerMeowington")
+// .then(function(data){
+// 	console.log('result', data)
+// })
+
+// var getChampionSeasonDetails = function(champion_games, summoner_name){
+// 	// console.log('getChampionSeasonDetails', champion_games, champion_id)
+
+// 	var deferred = Q.defer();
+		
+// 	var result = {};
+// 	var i = 0;
+// 	var games = champion_games.length;
+	
+// 	var getData = function(){
+// 		getMatchDetails(champion_games[i].gameId)
+// 		.then(function(data){
+			
+// 			var filtered_data = extractDataFromMatchDetails(data, summoner_name);
+// 			result[champion_games[i].gameId] = filtered_data;
+			
+// 			i++;
+
+// 			if(i < games){
+// 				getData();
+// 			}else{
+// 				deferred.resolve(result);
+// 			}
+// 		})
+// 	}
+// 	getData();
+
+// 	return deferred.promise;
+// }
+
+// var getSeasonDetails = function(season_id){
+// 	var deferred = Q.defer();
+
+// 	if(season_id === undefined){
+// 		season_id = 7
+// 	}
+
+// 	console.log('getSeasonDetails', season_id)
+
+// 	// get the list of champions that were used during season #7
+// 	var season_matches = filterPropertyValueMatch(match_data, 'season', season_id)
+
+// 	// sort the matches based on their used champion
+// 	var sorted_by_champion = sortByPropertyValue(season_matches, 'champion')
+
+// 	var result = {};
+// 	var i = 0;
+// 	var champion_ids = Object.keys(sorted_by_champion);
+// 	var n_champions = champion_ids.length;
+
+// 	var getData = function(){
+// 		var champion_id = champion_ids[i];
+// 		// console.log('getData', champion_id);
+// 		getChampionSeasonDetails(sorted_by_champion[champion_id], 'SerMeowington')
+// 		.then(function(data){
+// 			// console.log(data)
+// 			result[champion_id] = data;
+
+// 			i++
+// 			if(i < n_champions){
+// 				getData();
+// 			}else{
+// 				deferred.resolve(result);
+// 			}
+// 		})
+// 	}
+// 	getData();
+
+// 	return deferred.promise;
+// }
+
+// var formatSeasonDetails = function(data){
+// 	// champion_data.keys
+// 	var details = {}
+// 	var champion_ids = Object.keys(data);
+// 	for(var i = 0; i < champion_ids.length; i++){
+// 	// for(var i = 0; i < 5; i++){
+// 		var entry = data[champion_ids[i]];
+// 		var matches = Object.keys(entry);
+
+// 		// console.log('-----')
+// 		// console.log('name', champion_data.keys[champion_ids[i]]);
+// 		// console.log('n matches', matches.length);
+// 		// console.log('details', entry)
+
+// 		var win = 0;
+// 		var lose = 0;
+// 		var kills = 0;
+// 		var deaths = 0;
+// 		var assists = 0
+// 		var CS = 0;
+// 		var turretKills = 0;
+// 		var doubleKills = 0;
+// 		var tripleKills = 0;
+// 		var quadraKills = 0;
+// 		var gold = 0;
+
+// 		var maxKills = 0;
+// 		var maxDeaths = 0;
+
+// 		var totalDamageDealt = 0;
+// 		var totalDamageTaken = 0;
+
+// 		matches.map(function(item){
+// 			entry[item].win === true ? win++ : lose++;
+// 			maxKills = maxKills < entry[item].kills ? entry[item].kills : maxKills;
+// 			maxDeaths = maxDeaths < entry[item].deaths ? entry[item].deaths : maxDeaths;
+
+// 			kills += entry[item].kills;
+// 			deaths += entry[item].deaths;
+// 			assists += entry[item].assists;
+// 			CS += entry[item].CS;
+// 			turretKills += entry[item].turretKills;
+// 			doubleKills += entry[item].doubleKills;
+// 			tripleKills += entry[item].tripleKills;
+// 			quadraKills += entry[item].quadraKills;
+// 			totalDamageDealt += entry[item].totalDamageDealt;
+// 			totalDamageTaken += entry[item].totalDamageTaken;
+// 		})
+
+// 		var result = {
+// 			name: champion_data.keys[champion_ids[i]],
+// 			played: matches.length,
+// 			win: win,
+// 			lose: lose,
+// 			kills: kills/matches.length,
+// 			deaths: deaths/matches.length,
+// 			assists: assists/matches.length,
+// 			CS: CS/matches.length,
+// 			turretKills: turretKills/matches.length,
+// 			doubleKills: doubleKills,
+// 			tripleKills: tripleKills,
+// 			quadraKills: quadraKills,
+// 			maxKills: maxKills,
+// 			maxDeaths: maxDeaths,
+// 			totalDamageDealt: totalDamageDealt/matches.length,
+// 			totalDamageTaken: totalDamageTaken/matches.length
+// 		}
+// 		// console.log(result)
+
+// 		details[champion_ids[i]] = result;
+// 	}
+// 	// console.log(details)
+// 	return details;
+// }
 
 // console.log('champion', champion_data.keys[7])
 // setTimeout(function(){
@@ -359,7 +413,7 @@ var formatSeasonDetails = function(data){
 // lol.getMatchDetails(2325874040)
 // .then(function(data){
 // 	// console.log('result', data)
-// 	var result = getSummonerMatchDetails(data, 'SerMeowington')
+// 	var result = extractDataFromMatchDetails(data, 'SerMeowington')
 // 	// console.log('result', result)
 // })
 
@@ -383,10 +437,8 @@ var formatSeasonDetails = function(data){
 
 var lolAPI = (function(){
 	return {
-		getChampionName: getChampionName,
-		getRecentMatches: lol.getRecentMatches,
+		getRecentMatches: getRecentMatches,
 		getSummonerByName: getSummonerByName,
-		getMatchDetails: getMatchDetails
 	}
 })()
 

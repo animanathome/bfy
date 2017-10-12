@@ -8,19 +8,19 @@ services:
       - 80:80
     volumes:
       - /Users/manu/Code/bfy/client/build:/code/bfy
-  # mongo:
-  #   container_name: mongo
-  #   image: mongo
-  #   ports:
-  #     - "27017:27017"
-  #   volumes_from:
-  #     - mongodata
-  #   networks:
-  #     - default
-  # mongodata:
-  #   image: tianon/true
-  #   volumes:
-  #     - /Users/manu/Code/mvs/data/mongo-db:/data/db
+  mongo:
+    container_name: mongo
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes_from:
+      - mongodata
+    networks:
+      - default
+  mongodata:
+    image: tianon/true
+    volumes:
+      - /Users/manu/Code/bfy/data/db:/data/db
   server:
     container_name: server
     build: ./server
